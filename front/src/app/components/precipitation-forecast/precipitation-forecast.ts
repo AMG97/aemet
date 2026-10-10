@@ -11,7 +11,7 @@ import { PrecipitationProbability } from '../../models/prediction';
         <img
           src="/images/rainy.svg"
           alt="Probabilidad de precipitación"
-          class="w-8 h-8 ml-auto mb-4 opacity-70"
+          class="w-8 h-8 mr-auto mb-4 opacity-70"
         />
 
         <div class="grid grid-cols-4 gap-2">

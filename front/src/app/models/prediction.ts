@@ -1,3 +1,5 @@
+import { TemperatureUnit } from './temperature-unit';
+
 export interface PrecipitationProbability {
   probabilidad: number;
   periodo: string;
@@ -5,6 +7,6 @@ export interface PrecipitationProbability {
 
 export interface Prediction {
   mediaTemperatura: number;
-  unidadTemperatura: string;
+  unidadTemperatura: TemperatureUnit;
   probPrecipitacion: PrecipitationProbability[];
 }

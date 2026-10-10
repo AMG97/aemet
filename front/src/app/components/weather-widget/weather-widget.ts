@@ -2,13 +2,14 @@ import { Component, inject, signal, computed, effect } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { LocationAutocomplete } from '../location-autocomplete/location-autocomplete';
+import { MunicipalityAutocomplete } from '../municipality-autocomplete/municipality-autocomplete';
 import { TemperatureSelect } from '../temperature-select/temperature-select';
 import { WeatherInfoComponent } from '../weather-info/weather-info';
 import { PrecipitationForecastComponent } from '../precipitation-forecast/precipitation-forecast';
 import { Municipality } from '../../models/municipality';
 import { Prediction, PrecipitationProbability } from '../../models/prediction';
 import { ApiError } from '../../models/api-error';
+import { TemperatureUnit } from '../../models/temperature-unit';
 import { WeatherService } from '../../services/weather.service';
 
 @Component({
@@ -16,7 +17,7 @@ import { WeatherService } from '../../services/weather.service';
     MatCardModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    LocationAutocomplete,
+    MunicipalityAutocomplete,
     TemperatureSelect,
     WeatherInfoComponent,
     PrecipitationForecastComponent,
@@ -25,10 +26,10 @@ import { WeatherService } from '../../services/weather.service';
   template: `
     <mat-card class="p-4 m-4 max-w-2xl" appearance="outlined">
       <mat-card-header class="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
-        <app-location-autocomplete
+        <app-municipality-autocomplete
           class="flex-1 min-w-0"
           (municipalitySelected)="onMunicipalitySelected($event)"
-        ></app-location-autocomplete>
+        ></app-municipality-autocomplete>
         <app-temperature-select
           class="w-full sm:w-auto"
           (unitChanged)="onUnitChanged($event)"
@@ -36,22 +37,16 @@ import { WeatherService } from '../../services/weather.service';
       </mat-card-header>
 
       <mat-card-content class="flex flex-col items-center">
-        <app-weather-info
-          [municipalityName]="selectedMunicipalityName()"
-          [temperature]="pronostico()?.mediaTemperatura ?? null"
-          [unit]="selectedUnit()"
-          [icon]="weatherIcon()"
-        ></app-weather-info>
+        @if (!error()) {
+          <app-weather-info
+            [municipalityName]="selectedMunicipalityName()"
+            [temperature]="pronostico()?.mediaTemperatura ?? null"
+            [unit]="pronostico()?.unidadTemperatura ?? ''"
+          ></app-weather-info>
 
-        <app-precipitation-forecast
-          [intervals]="precipitationIntervals()"
-        ></app-precipitation-forecast>
-
-        @if (loading()) {
-          <div class="flex items-center gap-2 mt-4 text-gray-600">
-            <mat-spinner diameter="20"></mat-spinner>
-            <span>Cargando previsión...</span>
-          </div>
+          <app-precipitation-forecast
+            [intervals]="precipitationIntervals()"
+          ></app-precipitation-forecast>
         }
 
         @if (error(); as err) {
@@ -72,22 +67,15 @@ export class WeatherWidget {
 
   protected readonly selectedMunicipality = signal<Municipality | null>(null);
   protected readonly selectedMunicipalityName = signal<string | null>(null);
-  protected readonly selectedUnit = signal<'G_CEL' | 'G_FAH' | ''>('');
+  protected readonly selectedUnit = signal<TemperatureUnit>('');
   protected readonly pronostico = signal<Prediction | null>(null);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  // Computed values
   protected readonly precipitationIntervals = computed((): PrecipitationProbability[] => {
     return this.pronostico()?.probPrecipitacion ?? [];
   });
 
-  protected readonly weatherIcon = computed(() => {
-    // Since backend doesn't provide sky state, use a default decorative icon
-    return 'partly_cloudy';
-  });
-
-  // Effect to fetch forecast when municipality or unit changes
   constructor() {
     effect(() => {
       const municipio = this.selectedMunicipality();
@@ -108,12 +96,12 @@ export class WeatherWidget {
     this.error.set(null);
   }
 
-  onUnitChanged(unit: 'G_CEL' | 'G_FAH' | ''): void {
+  onUnitChanged(unit: TemperatureUnit): void {
     this.selectedUnit.set(unit);
     this.error.set(null);
   }
 
-private fetchForecast(codigo: string, unidad?: 'G_CEL' | 'G_FAH'): void {
+  private fetchForecast(codigo: string, unidad?: TemperatureUnit): void {
     this.loading.set(true);
     this.error.set(null);
 
@@ -124,7 +112,9 @@ private fetchForecast(codigo: string, unidad?: 'G_CEL' | 'G_FAH'): void {
       },
       error: (err: ApiError) => {
         this.loading.set(false);
-        this.error.set(err?.message ?? 'Error al cargar la previsión. Por favor, inténtelo de nuevo.');
+        this.error.set(
+          err?.message ?? 'Error al cargar la previsión. Por favor, inténtelo de nuevo.',
+        );
       },
     });
   }

@@ -2,6 +2,7 @@ import { Component, output } from '@angular/core';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
+import { TemperatureUnit } from '../../models/temperature-unit';
 
 @Component({
   imports: [MatSelectModule, MatFormFieldModule, FormsModule],
@@ -19,11 +20,11 @@ import { FormsModule } from '@angular/forms';
   styles: ``,
 })
 export class TemperatureSelect {
-  unitChanged = output<'G_CEL' | 'G_FAH' | ''>();
+  unitChanged = output<TemperatureUnit>();
 
-  selectedUnit: 'G_CEL' | 'G_FAH' | '' = '';
+  selectedUnit: TemperatureUnit = '';
 
-  temperatureOptions: { value: 'G_CEL' | 'G_FAH'; viewValue: string }[] = [
+  temperatureOptions: { value: TemperatureUnit; viewValue: string }[] = [
     { value: 'G_CEL', viewValue: '°C' },
     { value: 'G_FAH', viewValue: '°F' },
   ];

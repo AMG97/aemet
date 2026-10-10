@@ -10,7 +10,7 @@ import { WeatherService } from '../../services/weather.service';
 
 @Component({
   imports: [MatAutocompleteModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule],
-  selector: 'app-location-autocomplete',
+  selector: 'app-municipality-autocomplete',
   template: `
     <mat-form-field appearance="outline" class="w-full">
       <mat-label>Municipio</mat-label>
@@ -41,7 +41,7 @@ import { WeatherService } from '../../services/weather.service';
   `,
   styles: ``,
 })
-export class LocationAutocomplete {
+export class MunicipalityAutocomplete {
   private weatherService = inject(WeatherService);
 
   municipalitySelected = output<Municipality>();
@@ -51,7 +51,7 @@ export class LocationAutocomplete {
   readonly municipalities = toSignal(
     this.municipalityControl.valueChanges.pipe(
       startWith(''),
-      debounceTime(300),
+      debounceTime(400),
       distinctUntilChanged((a, b) => this.getSearchValue(a) === this.getSearchValue(b)),
       switchMap((value) => {
         const searchText = this.getSearchValue(value);
@@ -70,12 +70,10 @@ export class LocationAutocomplete {
     return typeof value === 'string' ? value : (value.nombre ?? '');
   }
 
-  // Called when user selects an option from autocomplete
   protected onOptionSelected(event: any): void {
     const municipio = event.option.value as Municipality;
     if (municipio) {
       this.municipalitySelected.emit(municipio);
-      // The form control will now hold the municipality object, displayWith shows the name
     }
   }
 }
