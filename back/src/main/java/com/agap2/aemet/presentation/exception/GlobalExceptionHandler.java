@@ -1,5 +1,6 @@
 package com.agap2.aemet.presentation.exception;
 
+import com.agap2.aemet.infrastructure.exception.AemetApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,8 +14,19 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(AemetApiException.class)
+    public ResponseEntity<Object> handleAemetApiError(AemetApiException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("timestamp", LocalDateTime.now());
+        error.put("status", ex.getStatusCode());
+        error.put("error", HttpStatus.valueOf(ex.getStatusCode()).getReasonPhrase());
+        error.put("message", ex.getResponseBody());
+
+        return ResponseEntity.status(ex.getStatusCode()).body(error);
+    }
+
     @ExceptionHandler(HttpServerErrorException.class)
-    public ResponseEntity<Object> handleAemetServerError(HttpServerErrorException ex) {
+    public ResponseEntity<Object> handleServerError(HttpServerErrorException ex) {
         Map<String, Object> error = new HashMap<>();
         error.put("timestamp", LocalDateTime.now());
         error.put("status", ex.getStatusCode().value());

@@ -21,11 +21,7 @@ public class AemetMunicipalityRepositoryImpl implements MunicipalityRepository {
 
     @Override
     public List<Municipality> findAll() {
-        List<AemetMunicipality> municipalities = aemetClient.getMunicipalitiesList();
-        if (municipalities == null || municipalities.isEmpty()) {
-            return List.of();
-        }
-        return municipalities.stream()
+        return aemetClient.getMunicipalitiesList().stream()
                 .map(this::mapToDomain)
                 .collect(Collectors.toList());
     }

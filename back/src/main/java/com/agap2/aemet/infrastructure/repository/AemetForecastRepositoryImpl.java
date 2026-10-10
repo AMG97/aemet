@@ -26,9 +26,6 @@ public class AemetForecastRepositoryImpl implements ForecastRepository {
     @Override
     public Forecast getNextDayForecast(String municipalityCode, TemperatureUnit unit) {
         AemetForecastData forecastData = aemetClient.getForecastDataByMunicipality(municipalityCode).get(0);
-        if (forecastData == null || forecastData.prediccion() == null || forecastData.prediccion().dia() == null) {
-            return new Forecast(0.0, unit.name(), List.of());
-        }
 
         LocalDate tomorrow = LocalDate.now().plusDays(1);
 
@@ -36,7 +33,6 @@ public class AemetForecastRepositoryImpl implements ForecastRepository {
                 .filter(dia -> {
                     LocalDate diaFecha = LocalDate.parse(dia.fecha().split("T")[0]);
                     return tomorrow.isEqual(diaFecha);
-
                 })
                 .findFirst();
 
