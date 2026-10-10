@@ -9,6 +9,7 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 @Component
 public class AemetClient {
@@ -45,80 +46,60 @@ public class AemetClient {
     }
 
     public AemetResponse getMunicipalitiesUrl() {
-        try {
-            return restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/maestro/municipios")
-                            .queryParam("api_key", apiKey)
-                            .build())
-                    .retrieve()
-                    .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
-                            (request, response) -> handleError(response))
-                    .body(AemetResponse.class);
-        } catch (AemetApiException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new AemetApiException(502, "Failed to call AEMET municipalities endpoint: " + e.getMessage());
-        }
+        return callApi(() -> restClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/maestro/municipios")
+                        .queryParam("api_key", apiKey)
+                        .build())
+                .retrieve()
+                .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+                        (request, response) -> handleError(response))
+                .body(AemetResponse.class));
     }
 
     public AemetResponse getForecastUrl(String municipalityCode) {
-        try {
-            return restClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/api/prediccion/especifica/municipio/diaria/{municipalityCode}")
-                            .queryParam("api_key", apiKey)
-                            .build(municipalityCode))
-                    .retrieve()
-                    .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
-                            (request, response) -> handleError(response))
-                    .body(AemetResponse.class);
-        } catch (AemetApiException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new AemetApiException(502, "Failed to call AEMET forecast endpoint: " + e.getMessage());
-        }
+        return callApi(() -> restClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/api/prediccion/especifica/municipio/diaria/{municipalityCode}")
+                        .queryParam("api_key", apiKey)
+                        .build(municipalityCode))
+                .retrieve()
+                .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+                        (request, response) -> handleError(response))
+                .body(AemetResponse.class));
     }
 
     public List<AemetForecastData> getForecastData(String datosUrl) {
-        try {
+        return callApi(() -> {
             String responseBody = restClient.get()
                     .uri(datosUrl)
                     .retrieve()
                     .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
                             (request, response) -> handleError(response))
                     .body(String.class);
-
-            return objectMapper.readValue(
-                    responseBody,
-                    new TypeReference<>() {
-                    }
-            );
-        } catch (AemetApiException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new AemetApiException(502, "Failed to parse forecast data: " + e.getMessage());
-        }
+            return objectMapper.readValue(responseBody, new TypeReference<>() {});
+        });
     }
 
     public List<AemetMunicipality> getMunicipalitiesData(String url) {
-        try {
+        return callApi(() -> {
             String responseBody = restClient.get()
                     .uri(url)
                     .retrieve()
                     .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
                             (request, response) -> handleError(response))
                     .body(String.class);
+            return objectMapper.readValue(responseBody, new TypeReference<>() {});
+        });
+    }
 
-            return objectMapper.readValue(
-                    responseBody,
-                    new TypeReference<>() {
-                    }
-            );
+    private <T> T callApi(Supplier<T> supplier) {
+        try {
+            return supplier.get();
         } catch (AemetApiException e) {
             throw e;
         } catch (Exception e) {
-            throw new AemetApiException(502, "Failed to parse municipalities data: " + e.getMessage());
+            throw new AemetApiException(503, "AEMET service unavailable: " + e.getMessage());
         }
     }
 
