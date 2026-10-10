@@ -1,60 +1,148 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal, computed, effect } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { TemperatureSelect } from '../temperature-select/temperature-select';
-import { LocationAutocomplete } from '../location-autocomplete/location-autocomplete';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { LocationAutocomplete } from '../location-autocomplete/location-autocomplete';
+import { TemperatureSelect } from '../temperature-select/temperature-select';
+import { WeatherInfoComponent } from '../weather-info/weather-info';
+import { PrecipitationForecastComponent } from '../precipitation-forecast/precipitation-forecast';
+import { Municipality } from '../../models/Municipality';
+import { Pronostico, ProbPrecipitacion } from '../../models/precipitation.model';
+import { WeatherService } from '../../services/weather.service';
 
 @Component({
-  imports: [MatCardModule, TemperatureSelect, LocationAutocomplete, MatIconModule],
+  imports: [
+    MatCardModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    LocationAutocomplete,
+    TemperatureSelect,
+    WeatherInfoComponent,
+    PrecipitationForecastComponent,
+  ],
   selector: 'app-weather-widget',
-  styles: ``,
   template: `
-    <mat-card class="p-2 m-2 max-w-lg" appearance="outlined">
-      <mat-card-header class="flexitems-center">
-        <app-location-autocomplete></app-location-autocomplete>
-        <app-temperature-select class="ml-auto"></app-temperature-select>
+    <mat-card class="p-4 m-4 max-w-2xl" appearance="outlined">
+      <mat-card-header class="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
+        <app-location-autocomplete
+          class="flex-1 min-w-0"
+          (municipalitySelected)="onMunicipalitySelected($event)"
+        ></app-location-autocomplete>
+        <app-temperature-select
+          class="w-full sm:w-auto"
+          (unitChanged)="onUnitChanged($event)"
+        ></app-temperature-select>
       </mat-card-header>
-      <mat-card-content class="flex flex-col items-center justify-center">
-        <div class="flex items-center justify-center gap-6">
-          <div>
-            <h2 class="text-2xl font-bold">Jumilla</h2>
-            <p class="text-xl">09/10/2026</p>
+
+      <mat-card-content class="flex flex-col items-center">
+        <app-weather-info
+          [municipalityName]="selectedMunicipalityName()"
+          [temperature]="pronostico()?.mediaTemperatura ?? null"
+          [unit]="selectedUnit()"
+          [icon]="weatherIcon()"
+        ></app-weather-info>
+
+        <app-precipitation-forecast
+          [intervals]="precipitationIntervals()"
+        ></app-precipitation-forecast>
+
+        @if (loading()) {
+          <div class="flex items-center gap-2 mt-4 text-gray-600">
+            <mat-spinner diameter="20"></mat-spinner>
+            <span>Cargando previsión...</span>
           </div>
+        }
 
-          <div>
-            <mat-icon class="material-symbols-outlined">partly_cloudy_day</mat-icon>
-            <p class="text-2xl font-bold">25ºC</p>
+        @if (error(); as err) {
+          <div class="mt-4 text-red-600 text-center">
+            <p>{{ err }}</p>
+            <button
+              mat-button
+              color="primary"
+              (click)="retryForecast()"
+              class="mt-2"
+            >
+              Reintentar
+            </button>
           </div>
-        </div>
-
-        <div class="grid grid-cols-4 mt-6">
-          @for (intervalo of intervalos; track intervalo.horas; let i = $index) {
-            <div class="flex flex-col items-center gap-2">
-              <span>{{ intervalo.probabilidad }}%</span>
-
-              <div class="h-0.5 w-full bg-gray-400"></div>
-
-              <div class="relative w-full text-center text-sm text-gray-500">
-                @if (i === 0) {
-                  <span class="absolute left-0 top-0 h-4 border-l border-gray-400"></span>
-                }
-
-                <span>{{ intervalo.horas }}</span>
-
-                <span class="absolute right-0 top-0 h-4 border-r border-gray-400"></span>
-              </div>
-            </div>
-          }
-        </div>
+        }
       </mat-card-content>
     </mat-card>
   `,
+  styles: ``,
 })
 export class WeatherWidget {
-  intervalos = [
-    { horas: '00-06 h', probabilidad: 10 },
-    { horas: '06-12 h', probabilidad: 35 },
-    { horas: '12-18 h', probabilidad: 80 },
-    { horas: '18-24 h', probabilidad: 20 },
-  ];
+  private weatherService = inject(WeatherService);
+
+  // State signals
+  protected readonly selectedMunicipality = signal<Municipality | null>(null);
+  protected readonly selectedMunicipalityName = signal<string | null>(null);
+  protected readonly selectedUnit = signal<'G_CEL' | 'G_FAH' | ''>('');
+  protected readonly pronostico = signal<Pronostico | null>(null);
+  protected readonly loading = signal(false);
+  protected readonly error = signal<string | null>(null);
+
+  // Computed values
+  protected readonly precipitationIntervals = computed((): ProbPrecipitacion[] => {
+    return this.pronostico()?.probPrecipitacion ?? [];
+  });
+
+  protected readonly weatherIcon = computed(() => {
+    // Since backend doesn't provide sky state, use a default decorative icon
+    return 'partly_cloudy';
+  });
+
+  // Effect to fetch forecast when municipality or unit changes
+  constructor() {
+    effect(() => {
+      const municipio = this.selectedMunicipality();
+      const unidad = this.selectedUnit();
+      
+      if (municipio) {
+        this.fetchForecast(municipio.codigo, unidad || undefined);
+      } else {
+        this.pronostico.set(null);
+        this.error.set(null);
+      }
+    });
+  }
+
+  onMunicipalitySelected(municipality: Municipality): void {
+    this.selectedMunicipality.set(municipality);
+    this.selectedMunicipalityName.set(municipality.nombre);
+    this.error.set(null);
+  }
+
+  onUnitChanged(unit: 'G_CEL' | 'G_FAH' | ''): void {
+    this.selectedUnit.set(unit);
+    this.error.set(null);
+  }
+
+  private fetchForecast(codigo: string, unidad?: 'G_CEL' | 'G_FAH'): void {
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.weatherService.obtenerPronostico(codigo, unidad).subscribe({
+      next: (pronostico) => {
+        this.loading.set(false);
+        if (pronostico) {
+          this.pronostico.set(pronostico);
+        } else {
+          this.error.set('No se pudo obtener la previsión. Inténtelo de nuevo.');
+        }
+      },
+      error: () => {
+        this.loading.set(false);
+        this.error.set('Error al cargar la previsión. Por favor, inténtelo de nuevo.');
+      },
+    });
+  }
+
+  retryForecast(): void {
+    const municipio = this.selectedMunicipality();
+    const unidad = this.selectedUnit();
+    if (municipio) {
+      this.fetchForecast(municipio.codigo, unidad || undefined);
+    }
+  }
 }
