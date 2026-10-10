@@ -1,12 +1,13 @@
 import { Component, output, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged, switchMap, of, startWith, map } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, of, startWith, catchError } from 'rxjs';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { Municipality } from '../../models/municipality';
 import { WeatherService } from '../../services/weather.service';
+import { ApiError } from '../../models/api-error';
 
 @Component({
   imports: [MatAutocompleteModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule],
@@ -45,6 +46,7 @@ export class MunicipalityAutocomplete {
   private weatherService = inject(WeatherService);
 
   municipalitySelected = output<Municipality>();
+  municipalityError = output<string>();
 
   readonly municipalityControl = new FormControl<Municipality | string>('');
 
@@ -55,7 +57,15 @@ export class MunicipalityAutocomplete {
       distinctUntilChanged((a, b) => this.getSearchValue(a) === this.getSearchValue(b)),
       switchMap((value) => {
         const searchText = this.getSearchValue(value);
-        return searchText.length >= 2 ? this.weatherService.buscarMunicipios(searchText) : of([]);
+        if (typeof value !== 'string') {
+          return value ? of([value]) : of([]);
+        }
+        return this.weatherService.buscarMunicipios(searchText).pipe(
+          catchError((err: ApiError) => {
+            this.municipalityError.emit(err?.message ?? 'Error al buscar municipios');
+            return of([]);
+          })
+        );
       }),
     ),
     { initialValue: [] as Municipality[] },

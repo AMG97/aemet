@@ -11,7 +11,7 @@ export class WeatherService {
   private http = inject(HttpClient);
 
   buscarMunicipios(prefix: string): Observable<Municipality[]> {
-    if (!prefix || prefix.length < 2) {
+    if (!prefix || prefix.length === 0) {
       return of([]);
     }
     return this.http.get<Municipality[]>(

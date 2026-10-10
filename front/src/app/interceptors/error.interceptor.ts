@@ -28,12 +28,6 @@ export class ErrorInterceptor implements HttpInterceptor {
   }
 
   private getErrorMessage(error: HttpErrorResponse): string {
-    if (error.error?.message) {
-      return error.error.message;
-    }
-    if (error.error?.descripcion) {
-      return error.error.descripcion;
-    }
     switch (error.status) {
       case 0:
         return 'No se puede conectar con el servidor. Verifique su conexión.';

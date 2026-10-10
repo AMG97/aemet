@@ -29,6 +29,7 @@ import { WeatherService } from '../../services/weather.service';
         <app-municipality-autocomplete
           class="flex-1 min-w-0"
           (municipalitySelected)="onMunicipalitySelected($event)"
+          (municipalityError)="onMunicipalityError($event)"
         ></app-municipality-autocomplete>
         <app-temperature-select
           class="w-full sm:w-auto"
@@ -52,9 +53,6 @@ import { WeatherService } from '../../services/weather.service';
         @if (error(); as err) {
           <div class="mt-4 text-red-600 text-center">
             <p>{{ err }}</p>
-            <button mat-button color="primary" (click)="retryForecast()" class="mt-2">
-              Reintentar
-            </button>
           </div>
         }
       </mat-card-content>
@@ -119,11 +117,7 @@ export class WeatherWidget {
     });
   }
 
-  retryForecast(): void {
-    const municipio = this.selectedMunicipality();
-    const unidad = this.selectedUnit();
-    if (municipio) {
-      this.fetchForecast(municipio.codigo, unidad || undefined);
-    }
+  onMunicipalityError(message: string): void {
+    this.error.set(message);
   }
 }
