@@ -5,7 +5,7 @@ import { debounceTime, distinctUntilChanged, switchMap, of, startWith, map } fro
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { Municipality } from '../../models/Municipality';
+import { Municipality } from '../../models/municipality';
 import { WeatherService } from '../../services/weather.service';
 
 @Component({

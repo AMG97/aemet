@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ProbPrecipitacion } from '../../models/precipitation.model';
+import { PrecipitationProbability } from '../../models/prediction';
 
 @Component({
   imports: [CommonModule],
@@ -8,10 +8,10 @@ import { ProbPrecipitacion } from '../../models/precipitation.model';
   template: `
     @if (intervals().length > 0) {
       <div class="w-full mt-6">
-        <img 
-          src="/images/rainy.svg" 
-          alt="Probabilidad de precipitación" 
-          class="w-10 h-10 mx-auto mb-4 opacity-70"
+        <img
+          src="/images/rainy.svg"
+          alt="Probabilidad de precipitación"
+          class="w-8 h-8 ml-auto mb-4 opacity-70"
         />
 
         <div class="grid grid-cols-4 gap-2">
@@ -43,5 +43,5 @@ import { ProbPrecipitacion } from '../../models/precipitation.model';
   styles: ``,
 })
 export class PrecipitationForecastComponent {
-  intervals = input<ProbPrecipitacion[]>([]);
+  intervals = input<PrecipitationProbability[]>([]);
 }
