@@ -1,6 +1,6 @@
-package com.agap2.aemet.application.mapper;
+package com.agap2.aemet.presentation.mapper;
 
-import com.agap2.aemet.application.dto.MunicipalityResponse;
+import com.agap2.aemet.presentation.dto.MunicipalityResponse;
 import com.agap2.aemet.domain.model.Municipality;
 import org.springframework.stereotype.Component;
 

@@ -1,4 +1,4 @@
-package com.agap2.aemet.application.dto;
+package com.agap2.aemet.presentation.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

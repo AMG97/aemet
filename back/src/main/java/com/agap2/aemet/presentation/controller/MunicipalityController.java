@@ -1,7 +1,8 @@
 package com.agap2.aemet.presentation.controller;
 
-import com.agap2.aemet.application.dto.MunicipalityResponse;
-import com.agap2.aemet.application.service.MunicipalitySearchService;
+import com.agap2.aemet.presentation.dto.MunicipalityResponse;
+import com.agap2.aemet.application.usecases.SearchMunicipalitiesByPrefixUseCase;
+import com.agap2.aemet.presentation.mapper.MunicipalityMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,16 +15,25 @@ import java.util.List;
 @RequestMapping("/api/v1/municipalities")
 public class MunicipalityController {
 
-    private final MunicipalitySearchService municipalitySearchService;
+    private final SearchMunicipalitiesByPrefixUseCase searchMunicipalitiesByPrefixUseCase;
+    private final MunicipalityMapper municipalityMapper;
 
-    public MunicipalityController(MunicipalitySearchService municipalitySearchService) {
-        this.municipalitySearchService = municipalitySearchService;
+    public MunicipalityController(
+            SearchMunicipalitiesByPrefixUseCase searchMunicipalitiesByPrefixUseCase,
+            MunicipalityMapper municipalityMapper
+            ) {
+        this.searchMunicipalitiesByPrefixUseCase = searchMunicipalitiesByPrefixUseCase;
+        this.municipalityMapper = municipalityMapper;
     }
 
     @GetMapping("/search")
     public ResponseEntity<List<MunicipalityResponse>> searchByNamePrefix(
-            @RequestParam(required = false, defaultValue = "") String prefix) {
-        List<MunicipalityResponse> municipalities = municipalitySearchService.searchByNamePrefix(prefix);
-        return ResponseEntity.ok(municipalities);
+            @RequestParam String prefix) {
+
+        return ResponseEntity.ok(
+                municipalityMapper.toResponseList(
+                        searchMunicipalitiesByPrefixUseCase.execute(prefix)
+                )
+        );
     }
 }
