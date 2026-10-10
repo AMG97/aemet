@@ -6,8 +6,9 @@ import { LocationAutocomplete } from '../location-autocomplete/location-autocomp
 import { TemperatureSelect } from '../temperature-select/temperature-select';
 import { WeatherInfoComponent } from '../weather-info/weather-info';
 import { PrecipitationForecastComponent } from '../precipitation-forecast/precipitation-forecast';
-import { Municipality } from '../../models/Municipality';
-import { Pronostico, ProbPrecipitacion } from '../../models/precipitation.model';
+import { Municipality } from '../../models/municipality';
+import { Prediction, PrecipitationProbability } from '../../models/prediction';
+import { ApiError } from '../../models/api-error';
 import { WeatherService } from '../../services/weather.service';
 
 @Component({
@@ -56,12 +57,7 @@ import { WeatherService } from '../../services/weather.service';
         @if (error(); as err) {
           <div class="mt-4 text-red-600 text-center">
             <p>{{ err }}</p>
-            <button
-              mat-button
-              color="primary"
-              (click)="retryForecast()"
-              class="mt-2"
-            >
+            <button mat-button color="primary" (click)="retryForecast()" class="mt-2">
               Reintentar
             </button>
           </div>
@@ -74,16 +70,15 @@ import { WeatherService } from '../../services/weather.service';
 export class WeatherWidget {
   private weatherService = inject(WeatherService);
 
-  // State signals
   protected readonly selectedMunicipality = signal<Municipality | null>(null);
   protected readonly selectedMunicipalityName = signal<string | null>(null);
   protected readonly selectedUnit = signal<'G_CEL' | 'G_FAH' | ''>('');
-  protected readonly pronostico = signal<Pronostico | null>(null);
+  protected readonly pronostico = signal<Prediction | null>(null);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
 
   // Computed values
-  protected readonly precipitationIntervals = computed((): ProbPrecipitacion[] => {
+  protected readonly precipitationIntervals = computed((): PrecipitationProbability[] => {
     return this.pronostico()?.probPrecipitacion ?? [];
   });
 
@@ -97,7 +92,7 @@ export class WeatherWidget {
     effect(() => {
       const municipio = this.selectedMunicipality();
       const unidad = this.selectedUnit();
-      
+
       if (municipio) {
         this.fetchForecast(municipio.codigo, unidad || undefined);
       } else {
@@ -118,22 +113,18 @@ export class WeatherWidget {
     this.error.set(null);
   }
 
-  private fetchForecast(codigo: string, unidad?: 'G_CEL' | 'G_FAH'): void {
+private fetchForecast(codigo: string, unidad?: 'G_CEL' | 'G_FAH'): void {
     this.loading.set(true);
     this.error.set(null);
 
     this.weatherService.obtenerPronostico(codigo, unidad).subscribe({
       next: (pronostico) => {
         this.loading.set(false);
-        if (pronostico) {
-          this.pronostico.set(pronostico);
-        } else {
-          this.error.set('No se pudo obtener la previsión. Inténtelo de nuevo.');
-        }
+        this.pronostico.set(pronostico);
       },
-      error: () => {
+      error: (err: ApiError) => {
         this.loading.set(false);
-        this.error.set('Error al cargar la previsión. Por favor, inténtelo de nuevo.');
+        this.error.set(err?.message ?? 'Error al cargar la previsión. Por favor, inténtelo de nuevo.');
       },
     });
   }
