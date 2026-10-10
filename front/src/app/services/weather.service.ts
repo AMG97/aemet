@@ -1,9 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
-import { Municipality } from '../models/Municipality';
-import { Pronostico, ProbPrecipitacion } from '../models/precipitation.model';
+import { Municipality } from '../models/municipality';
+import { Prediction } from '../models/prediction';
 
 @Injectable({ providedIn: 'root' })
 export class WeatherService {
@@ -14,37 +13,20 @@ export class WeatherService {
     if (!prefix || prefix.length < 2) {
       return of([]);
     }
-    return this.http
-      .get<Municipality[]>(`${this.backendUrl}/api/v1/municipalities/search?prefix=${prefix}`)
-      .pipe(
-        catchError((error) => {
-          console.error('Error al buscar municipios:', error);
-          return of([]);
-        }),
-      );
+    return this.http.get<Municipality[]>(
+      `${this.backendUrl}/api/v1/municipalities/search?prefix=${prefix}`,
+    );
   }
 
-  obtenerPronostico(
-    codigoMunicipio: string,
-    unidad?: 'G_CEL' | 'G_FAH',
-  ): Observable<Pronostico | null> {
+  obtenerPronostico(codigoMunicipio: string, unidad?: 'G_CEL' | 'G_FAH'): Observable<Prediction> {
     const params: Record<string, string> = {};
     if (unidad) {
-      params['unidad'] = unidad;
+      params['unit'] = unidad;
     }
 
-    return this.http
-      .get<Pronostico>(
-        `${this.backendUrl}/api/v1/forecast/next-day?municipalityCode=${codigoMunicipio}`,
-        {
-          params,
-        },
-      )
-      .pipe(
-        catchError((error) => {
-          console.error('Error al obtener pronóstico:', error);
-          return of(null);
-        }),
-      );
+    return this.http.get<Prediction>(
+      `${this.backendUrl}/api/v1/forecast/next-day?municipalityCode=${codigoMunicipio}`,
+      { params },
+    );
   }
 }
