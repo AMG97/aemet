@@ -22,6 +22,10 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Make Maven wrapper executable
+        working-directory: ./back
+        run: chmod +x mvnw
+
       - name: Build and Test Backend
         working-directory: ./back
         run: ./mvnw clean verify -q
@@ -55,6 +59,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
+
+      - name: Make Maven wrapper executable
+        working-directory: ./back
+        run: chmod +x mvnw
 
       - name: Generate Coverage Report
         working-directory: ./back
