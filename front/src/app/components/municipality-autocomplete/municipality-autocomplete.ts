@@ -64,7 +64,7 @@ export class MunicipalityAutocomplete {
           catchError((err: ApiError) => {
             this.municipalityError.emit(err?.message ?? 'Error al buscar municipios');
             return of([]);
-          })
+          }),
         );
       }),
     ),

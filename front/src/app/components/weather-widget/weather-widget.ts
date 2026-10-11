@@ -1,11 +1,11 @@
 import { Component, inject, signal, computed, effect } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MunicipalityAutocomplete } from '../municipality-autocomplete/municipality-autocomplete';
 import { TemperatureSelect } from '../temperature-select/temperature-select';
 import { WeatherInfoComponent } from '../weather-info/weather-info';
 import { PrecipitationForecastComponent } from '../precipitation-forecast/precipitation-forecast';
+import { ErrorMessage } from '../error-message/error-message';
 import { Municipality } from '../../models/municipality';
 import { Prediction, PrecipitationProbability } from '../../models/prediction';
 import { ApiError } from '../../models/api-error';
@@ -15,12 +15,12 @@ import { WeatherService } from '../../services/weather.service';
 @Component({
   imports: [
     MatCardModule,
-    MatIconModule,
     MatProgressSpinnerModule,
     MunicipalityAutocomplete,
     TemperatureSelect,
     WeatherInfoComponent,
     PrecipitationForecastComponent,
+    ErrorMessage,
   ],
   selector: 'app-weather-widget',
   template: `
@@ -50,11 +50,7 @@ import { WeatherService } from '../../services/weather.service';
           ></app-precipitation-forecast>
         }
 
-        @if (error(); as err) {
-          <div class="mt-4 text-red-600 text-center">
-            <p>{{ err }}</p>
-          </div>
-        }
+        <app-error-message [message]="error()"></app-error-message>
       </mat-card-content>
     </mat-card>
   `,
