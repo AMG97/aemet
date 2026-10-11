@@ -24,23 +24,21 @@ public class AemetForecastRepositoryImpl implements ForecastRepository {
     }
 
     @Override
-    public Forecast getNextDayForecast(String municipalityCode, TemperatureUnit unit) {
+    public Forecast getForecastForDate(String municipalityCode, LocalDate date, TemperatureUnit unit) {
         AemetForecastData forecastData = aemetClient.getForecastDataByMunicipality(municipalityCode).get(0);
 
-        LocalDate tomorrow = LocalDate.now().plusDays(1);
-
-        Optional<AemetForecastData.Dia> tomorrowForecast = forecastData.prediccion().dia().stream()
+        Optional<AemetForecastData.Dia> dayForecast = forecastData.prediccion().dia().stream()
                 .filter(dia -> {
                     LocalDate diaFecha = LocalDate.parse(dia.fecha().split("T")[0]);
-                    return tomorrow.isEqual(diaFecha);
+                    return date.isEqual(diaFecha);
                 })
                 .findFirst();
 
-        if (tomorrowForecast.isEmpty()) {
+        if (dayForecast.isEmpty()) {
             return new Forecast(0.0, unit.name(), List.of());
         }
 
-        AemetForecastData.Dia dia = tomorrowForecast.get();
+        AemetForecastData.Dia dia = dayForecast.get();
         Double avgTemp = calculateAverageTemperature(dia.temperatura(), unit);
         List<PrecipitationProbability> probabilities = mapProbabilities(dia.probPrecipitacion());
 

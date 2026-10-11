@@ -4,6 +4,7 @@ import com.agap2.aemet.domain.model.Forecast;
 import com.agap2.aemet.domain.model.TemperatureUnit;
 import com.agap2.aemet.domain.repository.ForecastRepository;
 import org.springframework.stereotype.Service;
+import java.time.LocalDate;
 
 @Service
 public class GetNextDayForecastUseCase {
@@ -15,6 +16,7 @@ public class GetNextDayForecastUseCase {
     }
 
     public Forecast execute(String municipalityCode, TemperatureUnit unit) {
-        return repository.getNextDayForecast(municipalityCode, unit);
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
+        return repository.getForecastForDate(municipalityCode, tomorrow, unit);
     }
 }
