@@ -30,6 +30,6 @@ public class ForecastController {
             @RequestParam String municipalityCode,
             @RequestParam(required = false, defaultValue = "G_CEL") TemperatureUnitParam unit) {
         Forecast forecast = getNextDayForecastUseCase.execute(municipalityCode, unit.toDomain());
-        return ResponseEntity.ok(forecastMapper.toResponse(forecast, unit.toApiValue()));
+        return ResponseEntity.ok(forecastMapper.toResponse(forecast));
     }
 }

@@ -3,6 +3,7 @@ package com.agap2.aemet.presentation.exception;
 import com.agap2.aemet.infrastructure.exception.AemetApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.client.HttpServerErrorException;
@@ -33,6 +34,16 @@ public class GlobalExceptionHandler {
         error.put("error", ex.getStatusText());
         error.put("message", "Error calling AEMET API: " + ex.getResponseBodyAsString());
         return ResponseEntity.status(ex.getStatusCode()).body(error);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Object> handleMissingParam(MissingServletRequestParameterException ex) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("timestamp", LocalDateTime.now());
+        error.put("status", HttpStatus.BAD_REQUEST.value());
+        error.put("error", "Bad Request");
+        error.put("message", "Required parameter '" + ex.getParameterName() + "' is missing");
+        return ResponseEntity.badRequest().body(error);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

@@ -13,8 +13,4 @@ public enum TemperatureUnitParam {
             case G_CEL -> CELSIUS;
         };
     }
-
-    public String toApiValue() {
-        return name();
-    }
 }

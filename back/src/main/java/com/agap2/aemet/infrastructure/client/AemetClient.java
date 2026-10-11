@@ -103,7 +103,7 @@ public class AemetClient {
         }
     }
 
-    private void handleError(org.springframework.http.client.ClientHttpResponse response) throws java.io.IOException {
+    void handleError(org.springframework.http.client.ClientHttpResponse response) throws java.io.IOException {
         int statusCode = response.getStatusCode().value();
         String responseBody;
 
