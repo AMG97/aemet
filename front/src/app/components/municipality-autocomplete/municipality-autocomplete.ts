@@ -60,7 +60,7 @@ export class MunicipalityAutocomplete {
         if (typeof value !== 'string') {
           return value ? of([value]) : of([]);
         }
-        return this.weatherService.buscarMunicipios(searchText).pipe(
+        return this.weatherService.searchMunicipalitiesByPrefix(searchText).pipe(
           catchError((err: ApiError) => {
             this.municipalityError.emit(err?.message ?? 'Error al buscar municipios');
             return of([]);

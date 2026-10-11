@@ -41,8 +41,8 @@ import { WeatherService } from '../../services/weather.service';
         @if (!error()) {
           <app-weather-info
             [municipalityName]="selectedMunicipalityName()"
-            [temperature]="pronostico()?.mediaTemperatura ?? null"
-            [unit]="pronostico()?.unidadTemperatura ?? ''"
+            [temperature]="forecast()?.mediaTemperatura ?? null"
+            [unit]="forecast()?.unidadTemperatura ?? ''"
           ></app-weather-info>
 
           <app-precipitation-forecast
@@ -62,12 +62,11 @@ export class WeatherWidget {
   protected readonly selectedMunicipality = signal<Municipality | null>(null);
   protected readonly selectedMunicipalityName = signal<string | null>(null);
   protected readonly selectedUnit = signal<TemperatureUnit>('');
-  protected readonly pronostico = signal<Prediction | null>(null);
-  protected readonly loading = signal(false);
+  protected readonly forecast = signal<Prediction | null>(null);
   protected readonly error = signal<string | null>(null);
 
   protected readonly precipitationIntervals = computed((): PrecipitationProbability[] => {
-    return this.pronostico()?.probPrecipitacion ?? [];
+    return this.forecast()?.probPrecipitacion ?? [];
   });
 
   constructor() {
@@ -78,7 +77,7 @@ export class WeatherWidget {
       if (municipio) {
         this.fetchForecast(municipio.codigo, unidad || undefined);
       } else {
-        this.pronostico.set(null);
+        this.forecast.set(null);
         this.error.set(null);
       }
     });
@@ -96,16 +95,13 @@ export class WeatherWidget {
   }
 
   private fetchForecast(codigo: string, unidad?: TemperatureUnit): void {
-    this.loading.set(true);
     this.error.set(null);
 
-    this.weatherService.obtenerPronostico(codigo, unidad).subscribe({
-      next: (pronostico) => {
-        this.loading.set(false);
-        this.pronostico.set(pronostico);
+    this.weatherService.getForecastNextDay(codigo, unidad).subscribe({
+      next: (forecast) => {
+        this.forecast.set(forecast);
       },
       error: (err: ApiError) => {
-        this.loading.set(false);
         this.error.set(
           err?.message ?? 'Error al cargar la previsión. Por favor, inténtelo de nuevo.',
         );

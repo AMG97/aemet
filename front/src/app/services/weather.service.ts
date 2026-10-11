@@ -10,7 +10,7 @@ export class WeatherService {
   private readonly backendUrl = 'http://localhost:8080'; //usually taken from environment.ts as apiUrl, but provided as a constant for simplicity in this example
   private http = inject(HttpClient);
 
-  buscarMunicipios(prefix: string): Observable<Municipality[]> {
+  searchMunicipalitiesByPrefix(prefix: string): Observable<Municipality[]> {
     if (!prefix || prefix.length === 0) {
       return of([]);
     }
@@ -19,7 +19,7 @@ export class WeatherService {
     );
   }
 
-  obtenerPronostico(municipalityCode: string, unit?: TemperatureUnit): Observable<Prediction> {
+  getForecastNextDay(municipalityCode: string, unit?: TemperatureUnit): Observable<Prediction> {
     const params: Record<string, string> = {};
     if (unit) {
       params['unit'] = unit;
