@@ -4,10 +4,11 @@ import { Observable, of } from 'rxjs';
 import { Municipality } from '../models/municipality';
 import { Prediction } from '../models/prediction';
 import { TemperatureUnit } from '../models/temperature-unit';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class WeatherService {
-  private readonly backendUrl = 'http://localhost:8080'; //usually taken from environment.ts as apiUrl, but provided as a constant for simplicity in this example
+  private readonly backendUrl = environment.apiUrl;
   private http = inject(HttpClient);
 
   searchMunicipalitiesByPrefix(prefix: string): Observable<Municipality[]> {
